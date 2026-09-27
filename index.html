@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="application-name" content="MJ Tempo" />
+  <meta name="apple-mobile-web-app-title" content="MJ Tempo" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>MJ Tempo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="card setup-card" id="setupView">
+      <div class="brand-row">
+        <div>
+          <p class="eyebrow">PREMIUM TEMPO</p>
+          <h1>Metronome</h1>
+          <p class="subtitle">사용자가 설정한 타겟 템포까지 알아서 올라가요</p>
+        </div>
+        <div class="brand-actions">
+          <label class="theme-toggle" title="다크 모드">
+            <span>다크</span>
+            <input id="themeToggle" type="checkbox" aria-label="다크 모드 전환" />
+          </label>
+          <button class="icon-btn" id="soundPreviewBtn" aria-label="메트로놈 소리 미리듣기">♪</button>
+        </div>
+      </div>
+
+      <div class="preset-panel">
+        <div class="preset-save-row">
+          <label class="field preset-name-field">
+            <span>카피하는 곡 이름</span>
+            <input id="songName" type="text" maxlength="40" placeholder="예: Help the poor" />
+          </label>
+          <button class="secondary-btn preset-save-btn" id="savePresetBtn">곡 저장</button>
+        </div>
+        <div class="preset-list" id="presetList"></div>
+      </div>
+
+      <div class="form-grid">
+        <label class="field">
+          <span>시작 BPM</span>
+          <input id="startBpm" type="number" min="30" max="300" value="80" inputmode="numeric" />
+        </label>
+        <label class="field">
+          <span>목표 BPM</span>
+          <input id="targetBpm" type="number" min="30" max="300" value="130" inputmode="numeric" />
+        </label>
+      </div>
+
+      <div class="time-card">
+        <div class="section-label">연습 시간</div>
+        <div class="time-inputs">
+          <label><input id="hours" type="number" min="0" value="2" /> <span>시간</span></label>
+          <label><input id="minutes" type="number" min="0" max="59" value="0" /> <span>분</span></label>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label class="select-wrap">
+          <span>박자</span>
+          <select id="timeSignature">
+            <option value="4">4/4</option>
+            <option value="3">3/4</option>
+            <option value="6">6/8</option>
+          </select>
+        </label>
+        <label class="select-wrap">
+          <span>리듬</span>
+          <select id="subdivision">
+            <option value="quarter">4분음표</option>
+            <option value="eighth">8분음표</option>
+            <option value="shuffle">셔플 리듬</option>
+            <option value="sixteenth">16분음표</option>
+          </select>
+        </label>
+        <label class="toggle-row">
+          <span>첫 박 강조</span>
+          <input id="accentToggle" type="checkbox" checked />
+        </label>
+      </div>
+
+      <div class="audio-settings">
+        <label class="select-wrap">
+          <span>메트로놈 소리</span>
+          <select id="clickSound">
+            <option value="classic">Classic Click</option>
+            <option value="wood">Wood Block</option>
+            <option value="soft">Soft Tick</option>
+            <option value="digital">Digital</option>
+          </select>
+        </label>
+
+        <label class="volume-wrap">
+          <span>볼륨</span>
+          <input id="volume" type="range" min="0" max="1.25" step="0.01" value="0.72" />
+        </label>
+      </div>
+
+      <div class="validation" id="validationMsg"></div>
+      <button class="primary-btn" id="startBtn">연습 시작</button>
+
+      <button class="resume-banner hidden" id="resumeBtn">
+        <span>진행 중인 세션이 있습니다</span>
+        <strong>이어서 하기 →</strong>
+      </button>
+    </section>
+
+    <section class="card session-card hidden" id="sessionView">
+      <div class="session-top">
+        <div>
+          <p class="eyebrow">STEALTH SESSION</p>
+          <h2 id="sessionStateLabel">연습 진행 중</h2>
+          <div class="target-reached-notice hidden" id="targetReachedNotice">
+            <span class="target-check">✓</span>
+            <span>타겟 BPM 도달 · 현재 템포 유지 중</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="text-btn" id="backBtn">뒤로가기</button>
+          <button class="text-btn danger" id="endBtn">종료</button>
+        </div>
+      </div>
+
+      <div class="progress-orbit" aria-hidden="true">
+        <svg viewBox="0 0 220 220">
+          <circle class="orbit-bg" cx="110" cy="110" r="92"></circle>
+          <circle class="orbit-progress" id="orbitProgress" cx="110" cy="110" r="92"></circle>
+        </svg>
+        <div class="orbit-center">
+          <div class="progress-value" id="progressPercent">0%</div>
+          <div class="progress-caption">전체 진행도</div>
+        </div>
+      </div>
+
+      <div class="time-display">
+        <div>
+          <span class="label">진행 시간</span>
+          <strong id="elapsedText">00:00:00</strong>
+        </div>
+        <div>
+          <span class="label">남은 시간</span>
+          <strong id="remainingText">02:00:00</strong>
+        </div>
+      </div>
+
+      <div class="session-controls">
+        <button class="secondary-btn" id="pauseBtn">일시정지</button>
+      </div>
+
+      <div class="session-mini-settings">
+        <label class="select-wrap compact-select">
+          <span>분할</span>
+          <select id="sessionSubdivision">
+            <option value="quarter">4분음표</option>
+            <option value="eighth">8분음표</option>
+            <option value="shuffle">셔플</option>
+            <option value="sixteenth">16분음표</option>
+          </select>
+        </label>
+        <label class="select-wrap compact-select">
+          <span>소리</span>
+          <select id="sessionClickSound">
+            <option value="classic">Classic Click</option>
+            <option value="wood">Wood Block</option>
+            <option value="soft">Soft Tick</option>
+            <option value="digital">Digital</option>
+          </select>
+        </label>
+        <label class="volume-wrap compact">
+          <span>볼륨</span>
+          <input id="sessionVolume" type="range" min="0" max="1.25" step="0.01" value="0.72" />
+        </label>
+        <div class="status-chip" id="statusChip">LIVE</div>
+      </div>
+
+      <p class="stealth-note">현재 BPM과 다음 상승 시점은 전부 랜덤임</p>
+    </section>
+
+    <section class="card complete-card hidden" id="completeView">
+      <p class="eyebrow">SESSION COMPLETE</p>
+      <h2>연습을 완료했습니다.</h2>
+      <p class="subtitle">목표 템포 구간까지 전체 세션이 정상적으로 완료되었습니다.</p>
+      <div class="complete-actions">
+        <button class="primary-btn" id="newSessionBtn">새 세션 시작</button>
+        <button class="secondary-btn" id="revealBtn">목표 BPM 보기</button>
+      </div>
+      <div class="reveal-box hidden" id="revealBox"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
+    }
+  </script>
+</body>
+</html>
